@@ -4,10 +4,12 @@ package com.jkdev.jobms.job.impl;
 import com.jkdev.jobms.job.Job;
 import com.jkdev.jobms.job.JobRepository;
 import com.jkdev.jobms.job.JobService;
+import com.jkdev.jobms.job.dto.JobWithCompanyDTO;
 import com.jkdev.jobms.job.external.Company;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,13 +24,19 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public List<Job> findAll() {
-        // RestTemplate communicate with company ms using API and map reponse to similar external Company class created in jobms
+    public List<JobWithCompanyDTO> findAll() {
+        // RestTemplate communicate with company ms using API and map response to similar external Company class created in jobms
+        List<Job> jobs = jobRepository.findAll();
         RestTemplate restTemplate = new RestTemplate();
-        Company company = restTemplate.getForObject("http://localhost:8081/companies/1", Company.class);
-        System.out.println("Company: " + company.getName());
-        System.out.println("Company: " + company.getId());
-        return jobRepository.findAll();
+        List<JobWithCompanyDTO> jobWithCompanyDTOS = new ArrayList<>();
+        for (Job job : jobs) {
+            JobWithCompanyDTO jobWithCompanyDTO = new JobWithCompanyDTO();
+            jobWithCompanyDTO.setJob(job); // set job obj to dto obj
+            Company company = restTemplate.getForObject("http://localhost:8081/companies/" + job.getCompanyId(), Company.class);
+            jobWithCompanyDTO.setCompany(company);  // get company obj and set to dto obj
+            jobWithCompanyDTOS.add(jobWithCompanyDTO);
+        }
+        return jobWithCompanyDTOS;
     }
 
     @Override
