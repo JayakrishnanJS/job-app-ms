@@ -12,6 +12,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -25,18 +26,24 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public List<JobWithCompanyDTO> findAll() {
-        // RestTemplate communicate with company ms using API and map response to similar external Company class created in jobms
         List<Job> jobs = jobRepository.findAll();
-        RestTemplate restTemplate = new RestTemplate();
         List<JobWithCompanyDTO> jobWithCompanyDTOS = new ArrayList<>();
-        for (Job job : jobs) {
-            JobWithCompanyDTO jobWithCompanyDTO = new JobWithCompanyDTO();
-            jobWithCompanyDTO.setJob(job); // set job obj to dto obj
-            Company company = restTemplate.getForObject("http://localhost:8081/companies/" + job.getCompanyId(), Company.class);
-            jobWithCompanyDTO.setCompany(company);  // get company obj and set to dto obj
-            jobWithCompanyDTOS.add(jobWithCompanyDTO);
-        }
-        return jobWithCompanyDTOS;
+        return jobs.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList()); // alternative of for loop
+        // this::convertToDTO is equivalent to writing:   job -> this.convertToDTO(job);
+        // => for every element (Job object) in the stream, the convertToDTO method will be invoked to transform it
+    }
+
+    // method to convert each job and company obj to combined dto obj
+    private JobWithCompanyDTO convertToDTO(Job job) {
+        // RestTemplate communicate with company ms using API and map response to similar external Company class created in jobms
+        JobWithCompanyDTO jobWithCompanyDTO = new JobWithCompanyDTO();
+        jobWithCompanyDTO.setJob(job); // set job obj to dto obj
+        RestTemplate restTemplate = new RestTemplate();
+        Company company = restTemplate.getForObject("http://localhost:8081/companies/" + job.getCompanyId(), Company.class);
+        jobWithCompanyDTO.setCompany(company);  // get company obj and set to dto obj
+        return jobWithCompanyDTO;
     }
 
     @Override
