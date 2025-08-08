@@ -4,7 +4,9 @@ package com.jkdev.jobms.job.impl;
 import com.jkdev.jobms.job.Job;
 import com.jkdev.jobms.job.JobRepository;
 import com.jkdev.jobms.job.JobService;
+import com.jkdev.jobms.job.external.Company;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +23,11 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public List<Job> findAll() {
+        // RestTemplate communicate with company ms using API and map reponse to similar external Company class created in jobms
+        RestTemplate restTemplate = new RestTemplate();
+        Company company = restTemplate.getForObject("http://localhost:8081/companies/1", Company.class);
+        System.out.println("Company: " + company.getName());
+        System.out.println("Company: " + company.getId());
         return jobRepository.findAll();
     }
 
