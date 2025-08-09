@@ -6,6 +6,8 @@ import com.jkdev.jobms.job.JobRepository;
 import com.jkdev.jobms.job.JobService;
 import com.jkdev.jobms.job.dto.JobWithCompanyDTO;
 import com.jkdev.jobms.job.external.Company;
+import com.netflix.discovery.converters.Auto;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -19,6 +21,9 @@ import java.util.stream.Collectors;
 public class JobServiceImpl implements JobService {
     //private List<Job> jobs = new ArrayList<>();
     JobRepository jobRepository;
+
+    @Autowired // tell spring to provide instance of restTemplate on runtime
+    RestTemplate restTemplate;
 
     public JobServiceImpl(JobRepository jobRepository) {
         this.jobRepository = jobRepository;
@@ -40,8 +45,8 @@ public class JobServiceImpl implements JobService {
         // RestTemplate communicate with company ms using API and map response to similar external Company class created in jobms
         JobWithCompanyDTO jobWithCompanyDTO = new JobWithCompanyDTO();
         jobWithCompanyDTO.setJob(job); // set job obj to dto obj
-        RestTemplate restTemplate = new RestTemplate();
-        Company company = restTemplate.getForObject("http://localhost:8081/companies/" + job.getCompanyId(), Company.class);
+        //RestTemplate restTemplate = new RestTemplate();
+        Company company = restTemplate.getForObject("http://COMPANY-SERVICE/companies/" + job.getCompanyId(), Company.class);
         jobWithCompanyDTO.setCompany(company);  // get company obj and set to dto obj
         return jobWithCompanyDTO;
     }
