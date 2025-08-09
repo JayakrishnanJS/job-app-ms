@@ -6,6 +6,7 @@ import com.jkdev.jobms.job.JobRepository;
 import com.jkdev.jobms.job.JobService;
 import com.jkdev.jobms.job.dto.JobWithCompanyDTO;
 import com.jkdev.jobms.job.external.Company;
+import com.jkdev.jobms.job.mapper.JobMapper;
 import com.netflix.discovery.converters.Auto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,12 +43,8 @@ public class JobServiceImpl implements JobService {
 
     // method to convert each job and company obj to combined dto obj
     private JobWithCompanyDTO convertToDTO(Job job) {
-        // RestTemplate communicate with company ms using API and map response to similar external Company class created in jobms
-        JobWithCompanyDTO jobWithCompanyDTO = new JobWithCompanyDTO();
-        jobWithCompanyDTO.setJob(job); // set job obj to dto obj
-        //RestTemplate restTemplate = new RestTemplate();
         Company company = restTemplate.getForObject("http://COMPANY-SERVICE/companies/" + job.getCompanyId(), Company.class);
-        jobWithCompanyDTO.setCompany(company);  // get company obj and set to dto obj
+        JobWithCompanyDTO jobWithCompanyDTO = JobMapper.mapJobWithCompanyDTO(job, company); // mapper maps both objs to a single dto obj
         return jobWithCompanyDTO;
     }
 
