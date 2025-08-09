@@ -8,7 +8,7 @@ public interface JobService {
     List<JobWithCompanyDTO> findAll();
     void addJob(Job job);
 
-    Job getJobById(Long id);
+    JobWithCompanyDTO getJobById(Long id);
     boolean deleteJobById(Long id);
 
     boolean updateJobById(Long id, Job updatedJob);
