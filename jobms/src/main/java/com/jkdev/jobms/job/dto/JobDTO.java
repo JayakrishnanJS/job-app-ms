@@ -1,10 +1,12 @@
 package com.jkdev.jobms.job.dto;
 
-import com.jkdev.jobms.job.Job;
 import com.jkdev.jobms.job.external.Company;
+import com.jkdev.jobms.job.external.Review;
+
+import java.util.List;
 
 // DTO pattern is used to combine objects of 2 ms and return as a combined response
-public class JobWithCompanyDTO {
+public class JobDTO {
 
     private Long id;
     private String title;
@@ -13,6 +15,7 @@ public class JobWithCompanyDTO {
     private String maxSalary;
     private String location;
     private Company company;
+    private List<Review> reviews;
 
     public String getTitle() {
         return title;
@@ -68,5 +71,13 @@ public class JobWithCompanyDTO {
 
     public void setCompany(Company company) {
         this.company = company;
+    }
+
+    public List<Review> getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(List<Review> reviews) {
+        this.reviews = reviews;
     }
 }

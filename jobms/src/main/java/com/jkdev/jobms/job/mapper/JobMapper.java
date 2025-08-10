@@ -1,21 +1,26 @@
 package com.jkdev.jobms.job.mapper;
 
 import com.jkdev.jobms.job.Job;
-import com.jkdev.jobms.job.dto.JobWithCompanyDTO;
+import com.jkdev.jobms.job.dto.JobDTO;
 import com.jkdev.jobms.job.external.Company;
+import com.jkdev.jobms.job.external.Review;
 
-// we need to map the company obj and job obj with the dto obj instead of 2 diff nested obj for job and company in a response
+import java.util.List;
+
+// we need to map the company obj, job obj and review list obj with the dto obj
 public class JobMapper {
-    public static JobWithCompanyDTO mapJobWithCompanyDTO(Job job, Company company) {
+    public static JobDTO mapJobWithCompanyDTO(Job job, Company company, List<Review> reviews) {
 
-        JobWithCompanyDTO jobWithCompanyDTO = new JobWithCompanyDTO();
-        jobWithCompanyDTO.setId(job.getId());
-        jobWithCompanyDTO.setTitle(job.getTitle());
-        jobWithCompanyDTO.setDescription(job.getDescription());
-        jobWithCompanyDTO.setMaxSalary(job.getMaxSalary());
-        jobWithCompanyDTO.setMinSalary(job.getMinSalary());
-        jobWithCompanyDTO.setCompany(company);
+        JobDTO jobDTO = new JobDTO();
+        jobDTO.setId(job.getId());
+        jobDTO.setTitle(job.getTitle());
+        jobDTO.setDescription(job.getDescription());
+        jobDTO.setMaxSalary(job.getMaxSalary());
+        jobDTO.setMinSalary(job.getMinSalary());
+        jobDTO.setLocation(job.getLocation());
+        jobDTO.setCompany(company);
+        jobDTO.setReviews(reviews);
 
-        return jobWithCompanyDTO;
+        return jobDTO;
     }
 }

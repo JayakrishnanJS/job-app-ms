@@ -4,15 +4,17 @@ package com.jkdev.jobms.job.impl;
 import com.jkdev.jobms.job.Job;
 import com.jkdev.jobms.job.JobRepository;
 import com.jkdev.jobms.job.JobService;
-import com.jkdev.jobms.job.dto.JobWithCompanyDTO;
+import com.jkdev.jobms.job.dto.JobDTO;
 import com.jkdev.jobms.job.external.Company;
+import com.jkdev.jobms.job.external.Review;
 import com.jkdev.jobms.job.mapper.JobMapper;
-import com.netflix.discovery.converters.Auto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,9 +33,8 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public List<JobWithCompanyDTO> findAll() {
+    public List<JobDTO> findAll() {
         List<Job> jobs = jobRepository.findAll();
-        List<JobWithCompanyDTO> jobWithCompanyDTOS = new ArrayList<>();
         return jobs.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList()); // alternative of for loop
@@ -42,10 +43,19 @@ public class JobServiceImpl implements JobService {
     }
 
     // method to convert each job and company obj to combined dto obj
-    private JobWithCompanyDTO convertToDTO(Job job) {
-        Company company = restTemplate.getForObject("http://COMPANY-SERVICE/companies/" + job.getCompanyId(), Company.class);
-        JobWithCompanyDTO jobWithCompanyDTO = JobMapper.mapJobWithCompanyDTO(job, company); // mapper maps both objs to a single dto obj
-        return jobWithCompanyDTO;
+    private JobDTO convertToDTO(Job job) {
+        Company company = restTemplate.getForObject("http://COMPANY-SERVICE:8081/companies/" + job.getCompanyId(), Company.class);
+        // getForObject -> better when one obj is returned by API
+        // exchange -> better when api returns list of objs
+        ResponseEntity<List<Review>> reviewResponse = restTemplate.exchange("http://REVIEW-SERVICE:8083/reviews?companyId=" + job.getCompanyId(),
+                                                HttpMethod.GET,
+                                                null, // since req body is null
+                                                new ParameterizedTypeReference<List<Review>>() { // tells generic type of response, here list of reviews
+                                                });
+        List<Review> reviews = reviewResponse.getBody(); // get body from response
+
+        JobDTO jobDTO = JobMapper.mapJobWithCompanyDTO(job, company, reviews); // maps all 3 objs and returns a single dto obj
+        return jobDTO;
     }
 
     @Override
@@ -54,7 +64,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public JobWithCompanyDTO getJobById(Long id) {
+    public JobDTO getJobById(Long id) {
         Job job = jobRepository.findById(id).orElse(null);
         return convertToDTO(job);
     }
