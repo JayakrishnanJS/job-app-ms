@@ -4,6 +4,8 @@ package com.jkdev.jobms.job.impl;
 import com.jkdev.jobms.job.Job;
 import com.jkdev.jobms.job.JobRepository;
 import com.jkdev.jobms.job.JobService;
+import com.jkdev.jobms.job.clients.CompanyClient;
+import com.jkdev.jobms.job.clients.ReviewClient;
 import com.jkdev.jobms.job.dto.JobDTO;
 import com.jkdev.jobms.job.external.Company;
 import com.jkdev.jobms.job.external.Review;
@@ -28,8 +30,13 @@ public class JobServiceImpl implements JobService {
     @Autowired // tell spring to provide instance of restTemplate on runtime
     RestTemplate restTemplate;
 
-    public JobServiceImpl(JobRepository jobRepository) {
+    private CompanyClient CompanyClient; // obj of Company CLient
+    private ReviewClient reviewClient;
+
+    public JobServiceImpl(JobRepository jobRepository, CompanyClient CompanyClient, ReviewClient reviewClient) {
         this.jobRepository = jobRepository;
+        this.CompanyClient = CompanyClient;
+        this.reviewClient = reviewClient;
     }
 
     @Override
@@ -44,16 +51,17 @@ public class JobServiceImpl implements JobService {
 
     // method to convert each job and company obj to combined dto obj
     private JobDTO convertToDTO(Job job) {
-        Company company = restTemplate.getForObject("http://COMPANY-SERVICE:8081/companies/" + job.getCompanyId(), Company.class);
+        //Company company = restTemplate.getForObject("http://COMPANY-SERVICE:8081/companies/" + job.getCompanyId(), Company.class);
         // getForObject -> better when one obj is returned by API
         // exchange -> better when api returns list of objs
-        ResponseEntity<List<Review>> reviewResponse = restTemplate.exchange("http://REVIEW-SERVICE:8083/reviews?companyId=" + job.getCompanyId(),
-                                                HttpMethod.GET,
-                                                null, // since req body is null
-                                                new ParameterizedTypeReference<List<Review>>() { // tells generic type of response, here list of reviews
-                                                });
-        List<Review> reviews = reviewResponse.getBody(); // get body from response
-
+        Company company = CompanyClient.getCompany(job.getCompanyId());
+//        ResponseEntity<List<Review>> reviewResponse = restTemplate.exchange("http://REVIEW-SERVICE:8083/reviews?companyId=" + job.getCompanyId(),
+//                                                HttpMethod.GET,
+//                                                null, // since req body is null
+//                                                new ParameterizedTypeReference<List<Review>>() { // tells generic type of response, here list of reviews
+//                                                });
+//        List<Review> reviews = reviewResponse.getBody(); // get body from response
+        List<Review> reviews = reviewClient.getReviews(job.getCompanyId());
         JobDTO jobDTO = JobMapper.mapJobWithCompanyDTO(job, company, reviews); // maps all 3 objs and returns a single dto obj
         return jobDTO;
     }

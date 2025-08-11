@@ -24,3 +24,7 @@ public class AppConfig {
  *         Company company = restTemplate.getForObject("http://localhost:8081/companies/" + job.getCompanyId(), Company.class);
  *         Company company = restTemplate.getForObject("http://Company-Service/companies/" + job.getCompanyId(), Company.class);
  */
+
+// AppConfig is not required if OpenFeign is used
+// if url of api changes, in restTemplate we need to go and change everywhere
+// feign does load balancing internally using ribbon
