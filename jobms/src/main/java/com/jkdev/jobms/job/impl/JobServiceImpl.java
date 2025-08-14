@@ -11,6 +11,7 @@ import com.jkdev.jobms.job.external.Company;
 import com.jkdev.jobms.job.external.Review;
 import com.jkdev.jobms.job.mapper.JobMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
@@ -33,7 +34,7 @@ public class JobServiceImpl implements JobService {
     @Autowired // tell spring to provide instance of restTemplate on runtime
     RestTemplate restTemplate;
 
-    private CompanyClient CompanyClient; // obj of Company CLient
+    private CompanyClient CompanyClient; // obj of Company Client
     private ReviewClient reviewClient;
 
     int attempts = 0; // to track count of retry
@@ -45,9 +46,11 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    //@CircuitBreaker(name="companyBreaker", fallbackMethod = "companyBreakerFallback")
+    @CircuitBreaker(name="companyBreaker", fallbackMethod = "companyBreakerFallback")
     @Retry(name = "companyBreaker", fallbackMethod = "companyBreakerFallback")
+    @RateLimiter(name = "companyBreaker", fallbackMethod = "companyBreakerFallback")
     public List<JobDTO> findAll() {
+        System.out.println("RateLimiter invoked for findAll");
         System.out.println("Retry attempts: " + ++attempts + "");
         List<Job> jobs = jobRepository.findAll();
         return jobs.stream()
