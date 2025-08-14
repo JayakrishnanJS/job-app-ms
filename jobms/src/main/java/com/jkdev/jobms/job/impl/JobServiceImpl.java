@@ -10,6 +10,7 @@ import com.jkdev.jobms.job.dto.JobDTO;
 import com.jkdev.jobms.job.external.Company;
 import com.jkdev.jobms.job.external.Review;
 import com.jkdev.jobms.job.mapper.JobMapper;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -40,6 +42,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    @CircuitBreaker(name="companyBreaker")
     public List<JobDTO> findAll() {
         List<Job> jobs = jobRepository.findAll();
         return jobs.stream()
@@ -48,6 +51,7 @@ public class JobServiceImpl implements JobService {
         // this::convertToDTO is equivalent to writing:   job -> this.convertToDTO(job);
         // => for every element (Job object) in the stream, the convertToDTO method will be invoked to transform it
     }
+    // companyBreaker - same instance of circuit breaker as in application.properties
 
     // method to convert each job and company obj to combined dto obj
     private JobDTO convertToDTO(Job job) {
