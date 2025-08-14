@@ -11,6 +11,7 @@ import com.jkdev.jobms.job.external.Company;
 import com.jkdev.jobms.job.external.Review;
 import com.jkdev.jobms.job.mapper.JobMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -35,6 +36,8 @@ public class JobServiceImpl implements JobService {
     private CompanyClient CompanyClient; // obj of Company CLient
     private ReviewClient reviewClient;
 
+    int attempts = 0; // to track count of retry
+
     public JobServiceImpl(JobRepository jobRepository, CompanyClient CompanyClient, ReviewClient reviewClient) {
         this.jobRepository = jobRepository;
         this.CompanyClient = CompanyClient;
@@ -42,8 +45,10 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    @CircuitBreaker(name="companyBreaker", fallbackMethod = "companyBreakerFallback")
+    //@CircuitBreaker(name="companyBreaker", fallbackMethod = "companyBreakerFallback")
+    @Retry(name = "companyBreaker", fallbackMethod = "companyBreakerFallback")
     public List<JobDTO> findAll() {
+        System.out.println("Retry attempts: " + ++attempts + "");
         List<Job> jobs = jobRepository.findAll();
         return jobs.stream()
                 .map(this::convertToDTO)
