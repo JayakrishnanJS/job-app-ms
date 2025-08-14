@@ -42,7 +42,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    @CircuitBreaker(name="companyBreaker")
+    @CircuitBreaker(name="companyBreaker", fallbackMethod = "companyBreakerFallback")
     public List<JobDTO> findAll() {
         List<Job> jobs = jobRepository.findAll();
         return jobs.stream()
@@ -52,6 +52,13 @@ public class JobServiceImpl implements JobService {
         // => for every element (Job object) in the stream, the convertToDTO method will be invoked to transform it
     }
     // companyBreaker - same instance of circuit breaker as in application.properties
+    // companyBreakerFallback - method which provides info about company ms status when it is down
+
+    public List<String> companyBreakerFallback(Exception e) {
+        List<String> list = new ArrayList<>();
+        list.add("Company Service is not available");
+        return list;
+    }
 
     // method to convert each job and company obj to combined dto obj
     private JobDTO convertToDTO(Job job) {
