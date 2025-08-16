@@ -92,6 +92,12 @@
 			<artifactId>spring-cloud-starter-openfeign</artifactId>
 		</dependency>
 
+		<!--rabbitmq-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-amqp</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<dependencyManagement>
@@ -103,13 +109,6 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
-
-			<!--rabbitmq-->
-			<dependency>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-starter-amqp</artifactId>
-			</dependency>
-
 		</dependencies>
 
 	</dependencyManagement>
