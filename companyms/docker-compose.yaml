@@ -1,20 +1,22 @@
 services:
+
   postgres:
-    container_name: postgres_container
-    image: postgres
+    container_name: postgres
+    image: postgres:17
     environment:
       POSTGRES_USER: embarkx
       POSTGRES_PASSWORD: embarkx
-      PGDATA: /data/postgres
+      PGDATA: /var/lib/postgresql/data
     volumes:
-      - postgres:/data/postgres
+      - postgres:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
       - postgres
     restart: unless-stopped
+
   pgadmin:
-    container_name: pgadmin_container
+    container_name: pgadmin
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
@@ -27,13 +29,86 @@ services:
     networks:
       - postgres
     restart: unless-stopped
-  zipkin:
-    container_name: zipkin
-    image: openzipkin/zipkin
+
+  configserver:
+    image: jkdev1998/configserver:latest
+    container_name: configserver
     ports:
-      - 9411:9411
-    networks:
+      - 8080:8080
+    depends_on:
       - postgres
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: unless-stopped
+
+  servicereg:
+    image: jkdev1998/servicereg:latest
+    container_name: servicereg
+    ports:
+      - "8761:8761"
+    depends_on:
+      - configserver
+      - rabbitmq
+      - zipkin
+      - postgres
+      - pgadmin
+    networks:
+      - microservice-network
+      - postgres
+    restart: unless-stopped
+
+  companyms:
+    image: jkdev1998/companyms:latest
+    container_name: companyms
+    ports:
+      - 8081:8081
+    depends_on:
+      - servicereg
+      - configserver
+      - postgres
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: unless-stopped
+
+  jobms:
+    image: jkdev1998/jobms:latest
+    container_name: jobms
+    ports:
+      - 8082:8082
+    depends_on:
+      - servicereg
+      - configserver
+      - postgres
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://servicereg:8761/eureka
+    restart: unless-stopped
+
+  reviewms:
+    image: jkdev1998/reviewms:latest
+    container_name: reviewms
+    ports:
+      - 8083:8083
+    depends_on:
+      - servicereg
+      - configserver
+      - postgres
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: unless-stopped
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -41,13 +116,41 @@ services:
       - 5672:5672
       - 15672:15672
     networks:
+      - microservice-network
       - postgres
+    restart: unless-stopped
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - 9411:9411
+    networks:
+      - microservice-network
+      - postgres
+    restart: unless-stopped
+
+  gateway:
+    image: jkdev1998/gateway:latest
+    container_name: gateway
+    ports:
+      - 8084:8084
+    depends_on:
+      - servicereg
+      - configserver
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: unless-stopped
 
 networks:
+  microservice-network:
+    driver: bridge
   postgres:
     driver: bridge
 
 volumes:
   postgres:
   pgadmin:
-
